@@ -5,7 +5,7 @@ function seq_to_mp4(fLocation, iType, cores)
   switch iType
   case 'dir'
     %Running on directory
-    convertList = dir([fLocation filesep '*.mp4']);
+    convertList = dir([fLocation filesep '*.seq']);
     numSEQ = length(convertList);
     %Run in single or parallel depending on cores
     if cores == 1
@@ -47,7 +47,7 @@ function read_the_seq(seqFullPath)
   %Calls seqIo to read the SEQ file. seqIo, and its dependencies,
   %seqReaderPlugin and seqWriterPlugin, are sourced from Piotr's toolbox,
   %found at https://github.com/pdollar/toolbox/tree/master/videos
-  seqID = seqIo( input_seq_file, 'reader' );
+  seqID = seqIo(seqFullPath, 'reader' );
   info=seqID.getinfo();
   lastFrame=min(lastFrame,info.numFrames-1);
   allFrames=firstFrame:frameWindow:lastFrame;
