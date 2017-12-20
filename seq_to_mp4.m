@@ -1,7 +1,10 @@
 % SEQ_TO_MP4(FLOCATION,ITYPE) converts either a single seq or a directory to mp4
 % This is a heavily modified version of Read_Seq_File.m by Sk Sahariyaz Zaman 
 
-function seq_to_mp4(fLocation, iType, cores)
+function seq_to_mp4(fLocation, iType, cores, videoShift)
+  if isempty(videoShift)
+      videoShift = 272;
+  end
   switch iType
   case 'dir'
     %Running on directory
@@ -57,7 +60,8 @@ function read_the_seq(seqFullPath)
     seqID.seek(currentFrame);
     [idx, ~] =seqID.getframe();
     shiftedIdx = idx(16:end,:);
-    shiftedIdx = circshift(shiftedIdx, 272,2);
+    shiftedIdx = circshift(shiftedIdx, videoShift,2);
+    %On Jinho's setup use 33
 
     writeVideo(mp4Writer, shiftedIdx);
   end
