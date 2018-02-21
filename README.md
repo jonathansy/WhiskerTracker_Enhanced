@@ -9,7 +9,6 @@ This package is designed to process a batch of files using the Janelia Farm Whis
 * [Janelia Farm Whisker Tracker Package](https://github.com/nclack/whisk)
   (Windows Binaries can also be found [here](https://openwiki.janelia.org/wiki/display/MyersLab/Whisker+Tracking+Downloads))
 * [MParallel](https://github.com/lordmulder/MParallel) (the code will automatically attempt to copy it from the Hires Lab NAS if your computer is connected)
-* [Piotr's Toolbox](https://github.com/pdollar/toolbox/tree/master/videos) (Only the video section is required)
 * MATLAB (Code was tested on R2017b, R2016b and R2013a although backwards compatibility issues seem unlikely) 
 
 ## Setup
