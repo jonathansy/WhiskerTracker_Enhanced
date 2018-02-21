@@ -10,25 +10,24 @@ PIXEL_DENSITY = 0.033;
 FACE_LOCATION = 'top';
 DISPLAY_STATISTICS = true;
 CONVERT_ALL_VIDEOS = true;
-NUMBER_OF_RESERVED_CORES = 0;
+NUMBER_OF_RESERVED_CORES = 2;
 USE_ERROR_CHECK = false;
 
 % DIRECTORY LIST ----------------------------------------------------------
-%Directory to find files to convert or track
+%Directory to find files to convert or track >>>
 startDirList = {...
-'D:\Data\AH0712\170902\Camera2';...
-'D:\Data\AH0717\170912\Camera1';...
+'Z:\Users\Jonathan_Sy\testSeq';...
 };
-%Directory to send tracked files
+%Directory to send tracked files >>>
 endDirList = {...
-'Z:\Data\Video\JON\AH0712\170902';...
-'Z:\Data\Video\JON\AH0717\170912';...
+'Z:\Users\Jonathan_Sy\testSeq';...
+
 };
-% -------------------------------------------------------------------------
+% VIDEO CONVERSION LIST ---------------------------------------------------
 %If you want to selective convert, fill this out in same order as directories:
-%Make sure to set CONVERT_ALL_VIDEOS to false to use this function
+%Make sure to set CONVERT_ALL_VIDEOS to false to use this function >>>
 convertVid = [...
-true;...
+false;...
 false;...
 ];
 
@@ -59,7 +58,9 @@ for i = 1:length(startDirList)
   sumCopyTime = sumCopyTime + copyTime;
 end
 
-%STAT SECTION -------------------------------------------------------------
+% =========================================================================
+% TRACKING STATISTICS
+% =========================================================================
 if DISPLAY_STATISTICS == true
   allFileTime = toc(allFileClock);
   totalHours = floor(allFileTime/3600);

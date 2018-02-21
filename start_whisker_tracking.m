@@ -33,7 +33,7 @@ function [copyTime, trackTime, convertTime, totalFiles] = start_whisker_tracking
     fprintf('Everything will be processed in the current directory')
   else
     %Handle variable argument processing in subfunction so all the code people don't care about can be at the bottom
-    [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, reservedCores, errorCheck] = varInputHandler(varargin);
+    [startDir, endDir, convertVideo, pixDen, whiskerNum, faceSide, reservedCores, errorCheck] = varInputHandler(varargin);
   end
   %If startDir and endDir are the same, don't transfer Video
   if strcmp(startDir, endDir)
@@ -41,6 +41,8 @@ function [copyTime, trackTime, convertTime, totalFiles] = start_whisker_tracking
   end
   numCores = feature('numcores'); %identify number of cores available for MATLAB to use
   numCores = numCores - reservedCores;
+  
+  cd(startDir)
 
   %% SECTION 2: CONVERT .SEQ TO .MP4 --------------------------------------
   mp4List = dir([startDir filesep '*mp4']);
@@ -79,7 +81,12 @@ function [copyTime, trackTime, convertTime, totalFiles] = start_whisker_tracking
       if convertVideoReally == 1
           tic
           fprintf('STARTING MP4 CONVERSION OF %s \n', startDir)
-          seq_to_mp4(startDir,'dir', numCores)
+          delete(gcp('nocreate'));
+          parpool(numCores);
+          parfor i = 1:length(seqList)
+              currentSEQ = seqList(i).name;
+              norpix_seq_reader_jsy(currentSEQ);
+          end
           fprintf('FINISHED MP4 CONVERSION \n')
           convertTime = toc;
       end
@@ -93,26 +100,27 @@ function [copyTime, trackTime, convertTime, totalFiles] = start_whisker_tracking
     error('There are no MP4 files to track in the directory: %s', startDir)
   end
   tic;
-  disp('STARTING WHISKER TRACKING OF %s \n', startDir)
+  fprintf('STARTING WHISKER TRACKING OF %s \n', startDir)
 
-  if exist('default.parameters','file')
+  if exist([startDir filesep 'default.parameters'],'file') == 2
       whisker_tracker_true_parallel(pixDen, whiskerNum, faceSide, numCores, errorCheck) % Uses 'classify' for multiple whisker tracking.
   else
       try
           system('copy C:\Users\shires\Documents\GitHub\jkWhisker\default.parameters startDir');
       catch
           try
-            system('copy Z:\default.parameters startDir');
+              system('copy Z:\default.parameters startDir');
+              whisker_tracker_true_parallel(pixDen, whiskerNum, faceSide, numCores, errorCheck)
           catch
-            warning('No default.parameters')
-            proceedQ = input(['No default.parameters file found, do you want to have '...
-             'the tracker autogenerate one that might be incorrect [Y/N]']);
-             if strcmpi(proceedQ, 'y')
-               whisker_tracker_true_parallel(pixDen, whiskerNum, faceSide, numCores, errorCheck)
-             else
-               error('Cannot proceed, no default.parameters file')
-             end
-           end
+              warning('No default.parameters')
+              proceedQ = input(['No default.parameters file found, do you want to have '...
+                  'the tracker autogenerate one that might be incorrect [Y/N]']);
+              if strcmpi(proceedQ, 'y')
+                  whisker_tracker_true_parallel(pixDen, whiskerNum, faceSide, numCores, errorCheck)
+              else
+                  error('Cannot proceed, no default.parameters file')
+              end
+          end
       end
   end
   disp('FINISHED TRACKING \n')
@@ -128,7 +136,7 @@ function [copyTime, trackTime, convertTime, totalFiles] = start_whisker_tracking
   totalFiles = nf_whiskers;
 
   %% SECTION 4: COPY FILES ------------------------------------------------
-
+  copyTime = 0;
   if transferVideo == 1
     tic;
     system(['copy ', startDir, '\*.mp4 ', endDir]);
@@ -146,6 +154,7 @@ end
 %And here is a subfunction to handle the varargin stuff because most people don't want to see this
 function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, eCheck] = varInputHandler(vInputs)
   %Defaults
+  inputN = length(vInputs);
   startDir = pwd;
   endDir = pwd;
   convertVideo = 1; %mp4 converter will run
@@ -153,11 +162,12 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
   pixDen = 0.033; %This is the default pixel density
   rCores = 0; %Standard is to not reserve any cores for parallel
   eCheck = false; %Default to not performin JK error check
+  faceSide = 'top'; %Default to top side
 
   %PARAMETER 1: Where to find files
-  if nargin >= 1 %Change start directory
+  if inputN >= 1 %Change start directory
     %Empty call
-    if vInputs{1} == 0 || vInputs{1} == ''
+    if strcmpi(vInputs{1},'')
       %Change NOTHING
     else
       %Check if actually a directory
@@ -173,9 +183,9 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 2: Where to transfer files
-  if nargin >= 2 %Change end directory
+  if inputN >= 2 %Change end directory
     %Empty call
-    if vInputs{2} == 0 || strcmp(vInputs{2},'')
+    if strcmp(vInputs{2},'')
       %Change NOTHING
     else
       %Check if actually a directory
@@ -191,7 +201,7 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 3: Do we need to convert SEQs?
-  if nargin >= 3
+  if inputN >= 3
     if vInputs{3} == 1 || strcmpi(vInputs{3},'true')
       convertVideo = 1;
     elseif vInputs{3} == 0 || strcmpi(vInputs{3},'false')
@@ -201,7 +211,7 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 4: Number of whiskers to track
-  if nargin >= 4
+  if inputN >= 4
     if vInputs{4} == 0 || strcmp(vInputs{4},'')
       %Do nothing
     else
@@ -209,7 +219,7 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 5: Pixel density
-  if nargin >= 5
+  if inputN >= 5
     if vInputs{5} == 0 || strcmp(vInputs{5},'')
       %Do nothing
     else
@@ -217,7 +227,7 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 6: Where is the face in the image?
-  if nargin >= 6
+  if inputN >= 6
     if ischar(vInputs{6})
       faceSide = vInputs{6};
     else
@@ -225,13 +235,13 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %PARAMETER 7: Should we save any CPU cores for non-tracking?
-  if nargin >= 7
+  if inputN >= 7
     if isnumeric(vInputs{6})
       rCores = vInputs{6};
     end
   end
   %PARAMETER 8: Whether or not to perform Jinho's error check (the check will not be parallel)
-  if nargin >= 8
+  if inputN >= 8
     switch vInputs{8}
     case 1
       eCheck = true;
@@ -242,7 +252,7 @@ function [startDir, endDir, convertVideo, whiskerNum, pixDen, faceSide, rCores, 
     end
   end
   %EXTRA PARAMETERS
-  if nargin > 8
+  if inputN > 8
     fprintf('You called this function with too many variables, ignoring extras')
   end
 end
